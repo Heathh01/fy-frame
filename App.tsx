@@ -74,7 +74,7 @@ const TRANSLATIONS = {
     right: "Right"
   },
   zh: {
-    app_title: "Lumina Frame",
+    app_title: "Feiyi的相片边框",
     edition: "旗舰版",
     drop_title: "拖拽图片至此",
     add_more: "添加更多图片",

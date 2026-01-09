@@ -19,6 +19,7 @@ import {
   Lock,
   Unlock,
   Settings2,
+  Globe,
   LucideIcon
 } from 'lucide-react';
 
@@ -26,6 +27,97 @@ import {
  * Lumina Frame - Ultimate Edition
  * Style: Modern Darkroom
  */
+
+const TRANSLATIONS = {
+  en: {
+    app_title: "Lumina Frame",
+    edition: "Ultimate Edition",
+    drop_title: "DROP IMAGES HERE",
+    add_more: "ADD MORE FILES",
+    film_roll: "Film Roll",
+    clear_all: "CLEAR ALL",
+    presets: "Presets",
+    geometry: "Geometry",
+    simple_scale: "Global Scale",
+    optics: "Optics Lab",
+    diffusion: "Diffusion",
+    intensity: "Intensity",
+    radius: "Radius",
+    markings: "Markings",
+    camera_model: "Camera Model",
+    lens_info: "Lens Info",
+    settings_placeholder: "ISO / Shutter",
+    date_placeholder: "Date",
+    quartz_placeholder: "Quartz Date",
+    save: "SAVE",
+    batch_export: "BATCH EXPORT",
+    processing: "PROCESSING...",
+    load_photos: "Load photos to start",
+    preset_gallery: "Gallery White",
+    preset_darkroom: "Darkroom Black",
+    preset_instant: "Instant Film",
+    preset_negative: "Film Negative",
+    preset_cinema: "Cinema Scope",
+    filter_none: "No Filter",
+    filter_soft: "Classic Soft",
+    filter_black_mist: "Black Mist",
+    filter_dreamy: "Nose Grease",
+    toggle_leak: "Leak",
+    toggle_shadow: "Shadow",
+    toggle_grain: "Grain",
+    toggle_quartz: "Quartz",
+    toggle_sign: "Sign",
+    toggle_palette: "Palette",
+    top: "Top",
+    bottom: "Bottom",
+    left: "Left",
+    right: "Right"
+  },
+  zh: {
+    app_title: "Lumina Frame",
+    edition: "旗舰版",
+    drop_title: "拖拽图片至此",
+    add_more: "添加更多图片",
+    film_roll: "胶卷",
+    clear_all: "清空",
+    presets: "预设风格",
+    geometry: "几何尺寸",
+    simple_scale: "全局缩放",
+    optics: "光学实验室",
+    diffusion: "柔光效果",
+    intensity: "强度",
+    radius: "半径",
+    markings: "印记与信息",
+    camera_model: "相机型号",
+    lens_info: "镜头信息",
+    settings_placeholder: "ISO / 快门",
+    date_placeholder: "日期",
+    quartz_placeholder: "石英日期",
+    save: "保存",
+    batch_export: "批量导出",
+    processing: "处理中...",
+    load_photos: "请加载照片以开始",
+    preset_gallery: "画廊白",
+    preset_darkroom: "暗房黑",
+    preset_instant: "拍立得",
+    preset_negative: "底片",
+    preset_cinema: "电影宽幅",
+    filter_none: "无滤镜",
+    filter_soft: "经典柔光",
+    filter_black_mist: "黑柔",
+    filter_dreamy: "梦幻",
+    toggle_leak: "漏光",
+    toggle_shadow: "阴影",
+    toggle_grain: "颗粒",
+    toggle_quartz: "石英钟",
+    toggle_sign: "签名",
+    toggle_palette: "色卡",
+    top: "上边距",
+    bottom: "下边距",
+    left: "左边距",
+    right: "右边距"
+  }
+};
 
 // --- Types ---
 interface Color {
@@ -61,7 +153,7 @@ interface Metadata {
 
 interface Preset {
   id: string;
-  name: string;
+  nameKey: keyof typeof TRANSLATIONS.en;
   bg: string;
   text: string;
   icon: React.ReactNode;
@@ -69,11 +161,14 @@ interface Preset {
 
 interface Filter {
   id: string;
-  name: string;
+  nameKey: keyof typeof TRANSLATIONS.en;
 }
+
+type Lang = 'en' | 'zh';
 
 export default function App() {
   // -- State --
+  const [lang, setLang] = useState<Lang>('en');
   
   // Queue & Selection
   const [queue, setQueue] = useState<QueueItem[]>([]); 
@@ -119,20 +214,23 @@ export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // Helper for translations
+  const t = (key: keyof typeof TRANSLATIONS.en) => TRANSLATIONS[lang][key] || key;
+
   // -- Constants --
   const PRESETS: Preset[] = [
-    { id: 'simple-white', name: 'Gallery White', bg: '#ffffff', text: '#333333', icon: <Maximize2 size={16} /> },
-    { id: 'simple-black', name: 'Darkroom Black', bg: '#121212', text: '#aaaaaa', icon: <Film size={16} /> },
-    { id: 'polaroid', name: 'Instant Film', bg: '#f4f4f4', text: '#222222', icon: <ImageIcon size={16} /> },
-    { id: 'film-negative', name: 'Film Negative', bg: '#000000', text: '#aaaaaa', icon: <Scissors size={16} /> },
-    { id: 'cinema', name: 'Cinema Scope', bg: '#000000', text: '#ffffff', icon: <Aperture size={16} /> },
+    { id: 'simple-white', nameKey: 'preset_gallery', bg: '#ffffff', text: '#333333', icon: <Maximize2 size={16} /> },
+    { id: 'simple-black', nameKey: 'preset_darkroom', bg: '#121212', text: '#aaaaaa', icon: <Film size={16} /> },
+    { id: 'polaroid', nameKey: 'preset_instant', bg: '#f4f4f4', text: '#222222', icon: <ImageIcon size={16} /> },
+    { id: 'film-negative', nameKey: 'preset_negative', bg: '#000000', text: '#aaaaaa', icon: <Scissors size={16} /> },
+    { id: 'cinema', nameKey: 'preset_cinema', bg: '#000000', text: '#ffffff', icon: <Aperture size={16} /> },
   ];
 
   const FILTERS: Filter[] = [
-    { id: 'none', name: 'No Filter' },
-    { id: 'soft', name: 'Classic Soft' },
-    { id: 'black-mist', name: 'Black Mist' },
-    { id: 'dreamy', name: 'Nose Grease' },
+    { id: 'none', nameKey: 'filter_none' },
+    { id: 'soft', nameKey: 'filter_soft' },
+    { id: 'black-mist', nameKey: 'filter_black_mist' },
+    { id: 'dreamy', nameKey: 'filter_dreamy' },
   ];
 
   // -- Helpers --
@@ -225,46 +323,41 @@ export default function App() {
         const originalH = metrics.height;
         const maxDim = Math.max(originalW, originalH);
         
-        // 1. Margin Calculation
+        // 1. Margin Calculation (Applied to ALL presets now)
         const m = getCalculatedMargins(originalW, originalH);
         
         let canvasW, canvasH, drawX, drawY;
         
         // 2. Layout Strategies
-        if (borderType === 'polaroid') {
-            const pSide = maxDim * 0.08; 
-            const pBottom = maxDim * 0.25;
-            canvasW = originalW + (pSide * 2);
-            canvasH = originalH + pSide + pBottom;
-            drawX = pSide;
-            drawY = pSide;
-        } 
-        else if (borderType === 'film-negative') {
-             const pSide = originalH * 0.05;
-             const pTopBot = originalH * 0.35;
-             canvasW = originalW + (pSide * 2);
-             canvasH = originalH + pTopBot;
-             drawX = pSide;
-             drawY = (canvasH - originalH) / 2;
+        // NOTE: Now all presets respect the calculated margins 'm' to allow geometry adjustment.
+        
+        // Standard / Gallery / Cinema / Negative / Polaroid Base Calculation
+        canvasW = originalW + m.left + m.right;
+        canvasH = originalH + m.top + m.bottom;
+        drawX = m.left;
+        drawY = m.top;
+
+        // Special adjustments for specific presets to maintain their "vibe" while allowing scaling
+        if (borderType === 'cinema') {
+            // Cinema usually has black bars on top/bottom primarily, but we respect user input.
+            // If user sets 0 margins, they get 0 bars.
         }
-        else if (borderType === 'cinema') {
-             canvasW = originalW;
-             canvasH = originalH + (originalH * 0.25);
-             drawX = 0;
-             drawY = (canvasH - originalH) / 2;
-        }
-        else {
-             // STANDARD / GALLERY 
-             canvasW = originalW + m.left + m.right;
-             canvasH = originalH + m.top + m.bottom;
-             
-             // Auto-expand bottom for text ONLY if in Simple mode
-             if (borderMode === 'simple' && (metadata.showMetadata || paletteEnabled || signatureEnabled)) {
-                 canvasH += (maxDim * 0.06); 
-             }
-             
-             drawX = m.left;
-             drawY = m.top;
+        
+        // Auto-expand bottom for text ONLY if in Simple mode and not cinema/negative special cases
+        // (Unless user explicitly switched to advanced, where they control margins manually)
+        if (borderMode === 'simple') {
+            if (borderType === 'polaroid') {
+                // Polaroid needs extra bottom
+                const extraBottom = maxDim * 0.2; 
+                canvasH += extraBottom;
+                // Polaroid typically has equal margins on top/sides in simple mode
+                // m already has uniform values
+            } else if (metadata.showMetadata || paletteEnabled || signatureEnabled) {
+                // For gallery, add space for text if enabled
+                 if (borderType !== 'cinema' && borderType !== 'film-negative') {
+                    canvasH += (maxDim * 0.06); 
+                 }
+            }
         }
 
         canvas.width = canvasW;
@@ -276,9 +369,13 @@ export default function App() {
         ctx.fillStyle = preset ? preset.bg : '#ffffff';
         ctx.fillRect(0, 0, canvasW, canvasH);
 
-        // 4. Texture (Noise)
+        // 4. Texture (Noise) - CLIPPED TO IMAGE
         if (textureEnabled && borderType !== 'cinema') {
             ctx.save();
+            ctx.beginPath();
+            ctx.rect(drawX, drawY, originalW, originalH);
+            ctx.clip();
+            
             const noiseSize = 128; 
             const noiseCanvas = document.createElement('canvas');
             noiseCanvas.width = noiseSize; noiseCanvas.height = noiseSize;
@@ -297,34 +394,43 @@ export default function App() {
                 const pattern = ctx.createPattern(noiseCanvas, 'repeat');
                 if (pattern) {
                     ctx.fillStyle = pattern;
-                    ctx.fillRect(0,0,canvasW, canvasH);
+                    ctx.fillRect(drawX, drawY, originalW, originalH); // Draw only in image area
                 }
             }
             ctx.restore();
         }
 
-        // 5. Sprockets
+        // 5. Sprockets (For Negative) - Draw in margins
         if (borderType === 'film-negative') {
             ctx.fillStyle = '#e5e5e5'; 
-            const holeW = canvasH * 0.04;
-            const holeH = holeW * 0.7;
-            const holeGap = holeW * 1.5;
-            const topY = (drawY - holeH) / 2;
-            const bottomY = drawY + originalH + topY;
-            for(let x = 0; x < canvasW; x += holeGap) {
-                ctx.beginPath();
-                if (ctx.roundRect) {
-                    ctx.roundRect(x, topY, holeW, holeH, 4);
-                    ctx.roundRect(x, bottomY, holeW, holeH, 4);
-                } else {
-                    ctx.rect(x, topY, holeW, holeH);
-                    ctx.rect(x, bottomY, holeW, holeH);
+            // Scale sprockets based on the available margin height
+            const marginH = Math.min(m.top, m.bottom);
+            if (marginH > 5) {
+                const holeH = marginH * 0.6; // 60% of margin height
+                const holeW = holeH * 1.4;
+                const holeGap = holeW * 1.5;
+                
+                const topY = (m.top - holeH) / 2;
+                const bottomY = canvasH - m.bottom + (m.bottom - holeH) / 2;
+                
+                // Draw only if there is enough space
+                if (topY >= 0) {
+                    for(let x = 0; x < canvasW; x += holeGap) {
+                        ctx.beginPath();
+                        if (ctx.roundRect) {
+                            ctx.roundRect(x, topY, holeW, holeH, 2);
+                            ctx.roundRect(x, bottomY, holeW, holeH, 2);
+                        } else {
+                            ctx.rect(x, topY, holeW, holeH);
+                            ctx.rect(x, bottomY, holeW, holeH);
+                        }
+                        ctx.fill();
+                    }
                 }
-                ctx.fill();
             }
         }
 
-        // 6. Shadow
+        // 6. Shadow (Behind image)
         if (shadowEnabled && borderType !== 'cinema' && borderType !== 'film-negative' && preset) {
             ctx.save();
             ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
@@ -339,9 +445,14 @@ export default function App() {
         // 7. Draw Image
         ctx.drawImage(img, drawX, drawY, originalW, originalH);
 
-        // 8. Optical Filters
+        // 8. Optical Filters - CLIPPED TO IMAGE
         if (filterType !== 'none') {
             ctx.save();
+            // Clip to image area to prevent filter bleeding onto border
+            ctx.beginPath();
+            ctx.rect(drawX, drawY, originalW, originalH);
+            ctx.clip();
+            
             const relativeBlur = (filterRadius / 1000) * Math.max(canvasW, canvasH);
             
             if (filterType === 'soft') {
@@ -368,6 +479,7 @@ export default function App() {
         // 9. Quartz Date
         if (quartzEnabled) {
             ctx.save();
+            // Quartz date usually on the photo itself
             const qFontSize = Math.max(originalW, originalH) * 0.04;
             ctx.font = `bold ${qFontSize}px "Courier New", monospace`;
             const dateText = metadata.quartzDate;
@@ -387,15 +499,19 @@ export default function App() {
             ctx.restore();
         }
 
-        // 10. Light Leaks
+        // 10. Light Leaks - CLIPPED TO IMAGE
         if (leakEnabled) {
             ctx.save();
+            ctx.beginPath();
+            ctx.rect(drawX, drawY, originalW, originalH);
+            ctx.clip();
+            
             ctx.globalCompositeOperation = 'screen'; 
-            const grad1 = ctx.createLinearGradient(0, 0, canvasW * 0.4, canvasH);
+            const grad1 = ctx.createLinearGradient(drawX, drawY, drawX + (originalW * 0.4), drawY + originalH);
             grad1.addColorStop(0, 'rgba(255, 140, 0, 0.3)'); 
             grad1.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = grad1;
-            ctx.fillRect(0, 0, canvasW, canvasH);
+            ctx.fillRect(drawX, drawY, originalW, originalH);
             ctx.restore();
         }
 
@@ -405,15 +521,20 @@ export default function App() {
         const sansFont = "Helvetica Neue, sans-serif";
         const cursiveFont = "Brush Script MT, cursive"; 
 
-        let textCursorY;
+        // Calculate text position based on layout
+        // For standard/polaroid in simple mode where we auto-added space, text goes in that space.
+        // For others, it tries to fit in bottom margin.
+        
+        // Center text in the bottom margin area
+        let textCursorY = drawY + originalH + (m.bottom / 2);
+        
+        // Special case adjustment for Polaroid which has a large bottom
         if (borderType === 'polaroid') {
-            textCursorY = drawY + originalH + ((canvasH - (drawY + originalH)) / 2);
-        } else if (borderType === 'cinema') {
-            textCursorY = canvasH - (baseFontSize * 1.5);
-        } else {
-            // Gallery: Center in the bottom margin
-            const availableBottom = canvasH - (drawY + originalH);
-            textCursorY = drawY + originalH + (availableBottom / 2);
+            // In polaroid, text is usually in the bottom wide area.
+            // If simple mode, we added extra height. If advanced, user made it.
+            // We'll aim for the middle of the bottom area.
+             const bottomSpace = canvasH - (drawY + originalH);
+             textCursorY = drawY + originalH + (bottomSpace / 2);
         }
 
         if (paletteEnabled && colors && colors.length > 0 && borderType !== 'cinema') {
@@ -458,7 +579,8 @@ export default function App() {
                 ctx.textAlign = 'center';
                 ctx.font = `${baseFontSize * 0.7}px ${sansFont}`;
                 ctx.letterSpacing = "4px"; 
-                ctx.fillText(`${metadata.camera}  //  ${metadata.settings}`.toUpperCase(), canvasW / 2, textCursorY);
+                // Draw in the black bar below image
+                ctx.fillText(`${metadata.camera}  //  ${metadata.settings}`.toUpperCase(), canvasW / 2, drawY + originalH + (m.bottom / 2));
             } else {
                 // Gallery
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -545,30 +667,35 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-200 font-sans flex flex-col md:flex-row overflow-hidden">
+    <div className="min-h-screen w-screen bg-neutral-950 text-neutral-200 font-sans flex flex-col md:flex-row overflow-hidden">
       
-      {/* Sidebar */}
-      <aside className="w-full md:w-96 flex-shrink-0 bg-black border-r border-neutral-800 flex flex-col h-screen overflow-hidden z-20 shadow-2xl">
+      {/* Sidebar - Desktop: Left, Mobile: Bottom (Order 2) */}
+      <aside className="w-full md:w-96 flex-shrink-0 bg-black border-t md:border-t-0 md:border-r border-neutral-800 flex flex-col h-[55vh] md:h-screen z-20 shadow-2xl order-2 md:order-1">
         
         {/* App Header */}
-        <div className="p-5 border-b border-neutral-800 bg-black shrink-0">
-          <h1 className="text-2xl font-serif tracking-wider text-white mb-1">LUMINA.</h1>
-          <div className="flex items-center gap-2 text-neutral-500">
-             <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-             <p className="text-[10px] uppercase tracking-widest">Ultimate Edition</p>
+        <div className="p-4 md:p-5 border-b border-neutral-800 bg-black shrink-0 flex justify-between items-center">
+          <div>
+            <h1 className="text-xl md:text-2xl font-serif tracking-wider text-white mb-1">{t('app_title')}.</h1>
+            <div className="flex items-center gap-2 text-neutral-500">
+               <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+               <p className="text-[10px] uppercase tracking-widest">{t('edition')}</p>
+            </div>
           </div>
+          <button onClick={() => setLang(l => l === 'en' ? 'zh' : 'en')} className="p-2 text-neutral-500 hover:text-white transition-colors">
+            <Globe size={18} />
+          </button>
         </div>
 
         {/* Controls Scroll Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="p-5 space-y-6 pb-24">
+          <div className="p-4 md:p-5 space-y-6 pb-24">
           
-            {/* 1. Queue (Fixed Alignment) */}
+            {/* 1. Queue */}
             <section>
                 <div 
                     className={`relative border border-dashed rounded-xl transition-all duration-300 cursor-pointer overflow-hidden group flex
                     ${isDragging ? 'border-white bg-neutral-900' : 'border-neutral-700 hover:border-neutral-500 bg-neutral-900/50'}
-                    ${queue.length > 0 ? 'h-16 flex-row justify-center items-center px-4' : 'h-28 flex-col justify-center items-center'}`}
+                    ${queue.length > 0 ? 'h-16 flex-row justify-center items-center px-4' : 'h-24 md:h-28 flex-col justify-center items-center'}`}
                     onDragOver={(e) => {e.preventDefault(); setIsDragging(true)}}
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={(e) => {
@@ -582,12 +709,12 @@ export default function App() {
                     {queue.length === 0 ? (
                         <>
                             <Upload className="mb-2 text-neutral-500" size={20} />
-                            <span className="text-xs font-medium text-neutral-500">DROP IMAGES HERE</span>
+                            <span className="text-xs font-medium text-neutral-500">{t('drop_title')}</span>
                         </>
                     ) : (
                         <div className="flex items-center gap-3 text-neutral-400">
                             <Plus size={20} />
-                            <span className="text-xs font-medium">ADD MORE FILES</span>
+                            <span className="text-xs font-medium">{t('add_more')}</span>
                         </div>
                     )}
                 </div>
@@ -595,8 +722,8 @@ export default function App() {
                 {queue.length > 0 && (
                     <div className="mt-4">
                         <div className="flex items-center justify-between mb-2">
-                             <h2 className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Film Roll ({queue.length})</h2>
-                             <button onClick={() => setQueue([])} className="text-[10px] text-red-900 hover:text-red-500">CLEAR ALL</button>
+                             <h2 className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">{t('film_roll')} ({queue.length})</h2>
+                             <button onClick={() => setQueue([])} className="text-[10px] text-red-900 hover:text-red-500">{t('clear_all')}</button>
                         </div>
                         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                             {queue.map((item, idx) => (
@@ -616,7 +743,7 @@ export default function App() {
             {/* 2. Presets */}
             <section>
                 <h2 className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <Layers size={12} /> Presets
+                    <Layers size={12} /> {t('presets')}
                 </h2>
                 <div className="grid grid-cols-1 gap-2">
                 {PRESETS.map((preset) => (
@@ -628,7 +755,7 @@ export default function App() {
                     >
                     <div className="flex items-center gap-3">
                         {preset.icon}
-                        <span>{preset.name}</span>
+                        <span>{t(preset.nameKey)}</span>
                     </div>
                     {borderType === preset.id && <div className="w-1.5 h-1.5 bg-black rounded-full"></div>}
                     </button>
@@ -641,20 +768,18 @@ export default function App() {
                 <div className="flex items-center justify-between p-3 bg-neutral-900/50">
                      <div className="flex items-center gap-2">
                         <Maximize2 size={14} className="text-neutral-500" />
-                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Geometry</span>
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">{t('geometry')}</span>
                      </div>
                      <div className="flex gap-1 bg-neutral-800 rounded p-0.5">
                         <button 
                             onClick={() => setBorderMode('simple')}
                             className={`p-1 rounded ${borderMode === 'simple' ? 'bg-neutral-600 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
-                            title="Simple Uniform Scale"
                         >
                             <Lock size={12} />
                         </button>
                         <button 
                             onClick={() => setBorderMode('advanced')}
                             className={`p-1 rounded ${borderMode === 'advanced' ? 'bg-neutral-600 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
-                            title="Advanced 4-Way Margins"
                         >
                             <Unlock size={12} />
                         </button>
@@ -665,7 +790,7 @@ export default function App() {
                     {borderMode === 'simple' ? (
                         <div className="space-y-2">
                              <div className="flex justify-between text-[10px] text-neutral-400">
-                                <span>Global Scale</span>
+                                <span>{t('simple_scale')}</span>
                                 <span>{scale}%</span>
                              </div>
                              <input type="range" min="0" max="30" step="0.5" value={scale} onChange={(e) => setScale(Number(e.target.value))} 
@@ -676,7 +801,7 @@ export default function App() {
                             {(['top', 'bottom', 'left', 'right'] as Array<keyof Margins>).map(side => (
                                 <div key={side} className="space-y-1">
                                     <div className="flex justify-between text-[10px] text-neutral-400 capitalize">
-                                        <span>{side}</span>
+                                        <span>{t(side)}</span>
                                         <span>{margins[side]}%</span>
                                     </div>
                                     <input type="range" min="0" max="30" step="0.5" 
@@ -696,7 +821,7 @@ export default function App() {
                     className="w-full flex items-center justify-between p-3 bg-neutral-900/50 hover:bg-neutral-900 transition-colors">
                      <div className="flex items-center gap-2">
                         <Sun size={14} className="text-neutral-500" />
-                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Optics Lab</span>
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">{t('optics')}</span>
                      </div>
                      {opticsExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </button>
@@ -704,14 +829,14 @@ export default function App() {
                 {opticsExpanded && (
                     <div className="p-3 space-y-4 border-t border-neutral-800">
                         <div className="space-y-2">
-                            <label className="text-[10px] text-neutral-500 uppercase tracking-wider">Diffusion</label>
+                            <label className="text-[10px] text-neutral-500 uppercase tracking-wider">{t('diffusion')}</label>
                             <div className="grid grid-cols-2 gap-2">
                                 {FILTERS.map(f => (
                                     <button key={f.id} onClick={() => setFilterType(f.id)}
                                         className={`text-[10px] py-1.5 rounded border transition-colors
                                             ${filterType === f.id ? 'bg-white text-black border-white' : 'text-neutral-400 border-neutral-700 hover:border-neutral-500'}`}
                                     >
-                                        {f.name}
+                                        {t(f.nameKey)}
                                     </button>
                                 ))}
                             </div>
@@ -720,20 +845,20 @@ export default function App() {
                         {filterType !== 'none' && (
                             <div className="space-y-3 pt-2 border-t border-neutral-800/50">
                                 <div>
-                                    <div className="flex justify-between text-[10px] text-neutral-500 mb-1"><span>Intensity</span><span>{Math.round(filterStrength*100)}%</span></div>
+                                    <div className="flex justify-between text-[10px] text-neutral-500 mb-1"><span>{t('intensity')}</span><span>{Math.round(filterStrength*100)}%</span></div>
                                     <input type="range" min="0" max="1" step="0.05" value={filterStrength} onChange={(e) => setFilterStrength(Number(e.target.value))} className="w-full h-1 bg-neutral-700 rounded-lg accent-white" />
                                 </div>
                                 <div>
-                                    <div className="flex justify-between text-[10px] text-neutral-500 mb-1"><span>Radius</span><span>{filterRadius}px</span></div>
+                                    <div className="flex justify-between text-[10px] text-neutral-500 mb-1"><span>{t('radius')}</span><span>{filterRadius}px</span></div>
                                     <input type="range" min="0" max="100" step="1" value={filterRadius} onChange={(e) => setFilterRadius(Number(e.target.value))} className="w-full h-1 bg-neutral-700 rounded-lg accent-white" />
                                 </div>
                             </div>
                         )}
                         
                         <div className="grid grid-cols-3 gap-2 pt-2">
-                            <Toggle label="Leak" active={leakEnabled} onClick={() => setLeakEnabled(!leakEnabled)} icon={Sun} />
-                            <Toggle label="Shadow" active={shadowEnabled} onClick={() => setShadowEnabled(!shadowEnabled)} icon={Layers} />
-                            <Toggle label="Grain" active={textureEnabled} onClick={() => setTextureEnabled(!textureEnabled)} icon={ImageIcon} />
+                            <Toggle label={t('toggle_leak')} active={leakEnabled} onClick={() => setLeakEnabled(!leakEnabled)} icon={Sun} />
+                            <Toggle label={t('toggle_shadow')} active={shadowEnabled} onClick={() => setShadowEnabled(!shadowEnabled)} icon={Layers} />
+                            <Toggle label={t('toggle_grain')} active={textureEnabled} onClick={() => setTextureEnabled(!textureEnabled)} icon={ImageIcon} />
                         </div>
                     </div>
                 )}
@@ -742,33 +867,33 @@ export default function App() {
             {/* 5. Imprint */}
             <section>
                 <h2 className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <Clock size={12} /> Markings
+                    <Clock size={12} /> {t('markings')}
                 </h2>
                 <div className="grid grid-cols-3 gap-2">
-                    <Toggle label="Quartz" active={quartzEnabled} onClick={() => setQuartzEnabled(!quartzEnabled)} icon={Clock} />
-                    <Toggle label="Sign" active={signatureEnabled} onClick={() => setSignatureEnabled(!signatureEnabled)} icon={PenTool} />
-                    <Toggle label="Palette" active={paletteEnabled} onClick={() => setPaletteEnabled(!paletteEnabled)} icon={Settings2} />
+                    <Toggle label={t('toggle_quartz')} active={quartzEnabled} onClick={() => setQuartzEnabled(!quartzEnabled)} icon={Clock} />
+                    <Toggle label={t('toggle_sign')} active={signatureEnabled} onClick={() => setSignatureEnabled(!signatureEnabled)} icon={PenTool} />
+                    <Toggle label={t('toggle_palette')} active={paletteEnabled} onClick={() => setPaletteEnabled(!paletteEnabled)} icon={Settings2} />
                 </div>
             </section>
             
-            {/* 6. Data Input (Fixed: Added Lens Input) */}
+            {/* 6. Data Input */}
             <section className="border-t border-neutral-800 pt-4">
                 <div className="space-y-2">
                     <input type="text" value={metadata.camera} onChange={(e) => setMetadata({...metadata, camera: e.target.value})}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded py-1.5 px-3 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-neutral-600" placeholder="Camera Model" />
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded py-1.5 px-3 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-neutral-600" placeholder={t('camera_model')} />
                     
                     <input type="text" value={metadata.lens} onChange={(e) => setMetadata({...metadata, lens: e.target.value})}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded py-1.5 px-3 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-neutral-600" placeholder="Lens Info" />
+                        className="w-full bg-neutral-900 border border-neutral-800 rounded py-1.5 px-3 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-neutral-600" placeholder={t('lens_info')} />
 
                     <div className="flex gap-2">
                          <input type="text" value={metadata.settings} onChange={(e) => setMetadata({...metadata, settings: e.target.value})}
-                            className="w-1/2 bg-neutral-900 border border-neutral-800 rounded py-1.5 px-3 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-neutral-600" placeholder="ISO / Shutter" />
+                            className="w-1/2 bg-neutral-900 border border-neutral-800 rounded py-1.5 px-3 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-neutral-600" placeholder={t('settings_placeholder')} />
                          <input type="text" value={metadata.date} onChange={(e) => setMetadata({...metadata, date: e.target.value})}
-                            className="w-1/2 bg-neutral-900 border border-neutral-800 rounded py-1.5 px-3 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-neutral-600" placeholder="Date" />
+                            className="w-1/2 bg-neutral-900 border border-neutral-800 rounded py-1.5 px-3 text-xs text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-neutral-600" placeholder={t('date_placeholder')} />
                     </div>
                     {quartzEnabled && (
                         <input type="text" value={metadata.quartzDate} onChange={(e) => setMetadata({...metadata, quartzDate: e.target.value})}
-                            className="w-full bg-neutral-900 border border-orange-900/30 rounded py-1.5 px-3 text-xs text-orange-400 font-mono focus:outline-none focus:border-orange-700" placeholder="Quartz Date" />
+                            className="w-full bg-neutral-900 border border-orange-900/30 rounded py-1.5 px-3 text-xs text-orange-400 font-mono focus:outline-none focus:border-orange-700" placeholder={t('quartz_placeholder')} />
                     )}
                 </div>
             </section>
@@ -777,27 +902,27 @@ export default function App() {
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t border-neutral-800 bg-black shrink-0 flex gap-3">
+        <div className="p-4 md:p-5 border-t border-neutral-800 bg-black shrink-0 flex gap-3">
             <button onClick={handleSingleExport} disabled={!currentImage || isBatchProcessing}
                 className="flex-1 flex items-center justify-center gap-2 bg-neutral-800 text-neutral-200 font-bold text-xs py-3 rounded hover:bg-neutral-700 disabled:opacity-50 transition-all">
-                <Download size={14} /> <span>SAVE</span>
+                <Download size={14} /> <span>{t('save')}</span>
             </button>
             <button onClick={handleBatchExport} disabled={queue.length === 0 || isBatchProcessing}
                 className="flex-[2] flex items-center justify-center gap-2 bg-white text-black font-bold text-xs py-3 rounded hover:bg-neutral-200 disabled:opacity-50 transition-all">
-                {isBatchProcessing ? <span className="animate-pulse">PROCESSING...</span> : <> <MoreHorizontal size={14} /> <span>BATCH EXPORT ({queue.length})</span> </>}
+                {isBatchProcessing ? <span className="animate-pulse">{t('processing')}</span> : <> <MoreHorizontal size={14} /> <span>{t('batch_export')} ({queue.length})</span> </>}
             </button>
         </div>
       </aside>
 
-      {/* Main Stage */}
-      <main className="flex-1 bg-[#0a0a0a] relative flex items-center justify-center p-6 overflow-hidden">
+      {/* Main Stage - Desktop: Right, Mobile: Top (Order 1) */}
+      <main className="flex-1 bg-[#0a0a0a] relative flex items-center justify-center p-4 md:p-6 overflow-hidden order-1 md:order-2 h-[45vh] md:h-screen">
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#444 1px, transparent 1px), linear-gradient(90deg, #444 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
         
         <div className="relative z-10 max-w-full max-h-full flex flex-col items-center transition-all duration-300">
           {!currentImage && (
             <div className="text-center max-w-md opacity-50">
               <div className="w-16 h-16 border border-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4 bg-neutral-900/50"><Upload size={24} /></div>
-              <p className="text-neutral-500 text-sm">Load photos to start</p>
+              <p className="text-neutral-500 text-sm">{t('load_photos')}</p>
             </div>
           )}
           
@@ -805,7 +930,7 @@ export default function App() {
           
           {previewUrl && currentImage && (
             <div className="relative group shadow-2xl shadow-black transition-transform duration-500">
-                 <img src={previewUrl} alt="Preview" className="max-w-full max-h-[85vh] object-contain" style={{ boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.6)' }} />
+                 <img src={previewUrl} alt="Preview" className="max-w-full max-h-[40vh] md:max-h-[85vh] object-contain" style={{ boxShadow: '0 30px 60px -15px rgba(0, 0, 0, 0.6)' }} />
                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur px-2 py-1 text-[10px] font-mono text-white rounded">
                     {currentImage.metrics.width} &times; {currentImage.metrics.height}
                  </div>

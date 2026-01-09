@@ -30,7 +30,7 @@ import {
 
 const TRANSLATIONS = {
   en: {
-    app_title: "Lumina Frame",
+    app_title: "Feiyi Frame",
     edition: "Ultimate Edition",
     drop_title: "DROP IMAGES HERE",
     add_more: "ADD MORE FILES",
